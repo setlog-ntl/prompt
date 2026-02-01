@@ -1,15 +1,30 @@
 import type { NextConfig } from "next";
 
+// Vercel 배포: VERCEL=1 자동 설정
+// GitHub Pages: GITHUB_ACTIONS=true 자동 설정
+const isVercel = process.env.VERCEL === "1";
+const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
-const nextConfig: NextConfig = {
-  // GitHub Pages(static) 배포를 위한 설정
-  // - Pages는 프로젝트 페이지로 서빙되므로 basePath(/prompt)가 필요
-  // - Next export를 위해 output: "export" 사용
-  output: "export",
-  trailingSlash: true,
-  basePath,
-  assetPrefix: basePath,
-};
+let nextConfig: NextConfig = {};
+
+if (isVercel) {
+  // Vercel: 서버 기능(API Routes) 사용 가능, 설정 불필요
+  nextConfig = {};
+} else if (isGitHubPages) {
+  // GitHub Pages: 정적 export만 (API 동작 불가)
+  // /api/generate는 dynamic이라 빌드에서 제외됨
+  nextConfig = {
+    output: "export",
+    trailingSlash: true,
+    basePath,
+    assetPrefix: basePath,
+    // 동적 API 라우트를 빌드에서 제외
+    experimental: {},
+  };
+} else {
+  // 로컬 개발: 기본 설정
+  nextConfig = {};
+}
 
 export default nextConfig;

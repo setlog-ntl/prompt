@@ -8,8 +8,10 @@ import {
   splitCompilerOutput,
 } from "@/lib/vibeprompt";
 
-// GitHub Pages(static export) 빌드를 위해 명시적으로 static 처리
+// GitHub Pages 빌드 시 static export 호환을 위해 설정
+// Vercel에서는 POST 핸들러가 자동으로 dynamic으로 동작함
 export const dynamic = "force-static";
+export const revalidate = false;
 
 type GenerateBody = {
   selectedScope: "project" | "agent";

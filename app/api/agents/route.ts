@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { listAgentIds } from "@/lib/vibeprompt";
 
-// GitHub Pages(static export) 빌드를 위해 명시적으로 static 처리
+// GitHub Pages(static export) 빌드 시에만 적용됨 (Vercel에서는 무시됨)
 export const dynamic = "force-static";
+export const revalidate = false;
 
 export async function GET() {
   try {
