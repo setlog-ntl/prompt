@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 type SelectedScope = "project" | "agent";
 type OutputMode = "prompt" | "prompt+md";
 
+const isStaticMode = !!process.env.NEXT_PUBLIC_BASE_PATH;
+
 export default function Home() {
   const [selectedScope, setSelectedScope] = useState<SelectedScope>("project");
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
@@ -15,11 +17,15 @@ export default function Home() {
   const [generatedDoc, setGeneratedDoc] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [staticMode, setStaticMode] = useState(isStaticMode);
 
   // 에이전트 목록 로드
   useEffect(() => {
     fetch("/api/agents")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("API not available");
+        return res.json();
+      })
       .then((data) => {
         if (data.agents) {
           setAvailableAgents(data.agents);
@@ -28,15 +34,18 @@ export default function Home() {
           }
         }
       })
-      .catch((err) => {
-        console.error("Failed to load agents:", err);
-        setError("에이전트 목록을 불러오는데 실패했습니다.");
+      .catch(() => {
+        setStaticMode(true);
       });
   }, []);
 
   const handleGenerate = async () => {
+    if (staticMode) {
+      setError("정적 배포 모드에서는 프롬프트 생성이 불가합니다. 로컬(npm run dev) 또는 Vercel 배포에서 이용해주세요.");
+      return;
+    }
     if (!userInput.trim()) {
-      setError("자유 입력을 작성해주세요.-");
+      setError("자유 입력을 작성해주세요.");
       return;
     }
     if (selectedScope === "agent" && selectedAgents.length === 0) {
@@ -95,6 +104,17 @@ export default function Home() {
             자유 입력을 실행용 프롬프트로 변환하는 1인용 도구
           </p>
         </header>
+
+        {staticMode && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg">
+            <p className="text-amber-800 dark:text-amber-200 text-sm font-medium">
+              정적 배포 모드 (GitHub Pages)
+            </p>
+            <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
+              UI 미리보기만 가능합니다. 프롬프트 생성 기능은 로컬(<code className="bg-amber-100 dark:bg-amber-800 px-1 rounded">npm run dev</code>) 또는 Vercel 배포에서 이용해주세요.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 입력 섹션 */}
